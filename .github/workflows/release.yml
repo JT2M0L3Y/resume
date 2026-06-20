@@ -1,12 +1,9 @@
 name: Create release
 
 on:
-  workflow_dispatch:
-    inputs:
-      edition:
-        description: 'Optional edition number for current month'
-        required: false
-        default: ''
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -25,18 +22,13 @@ jobs:
         run: |
           year=$(date +%Y)
           month=$(date +%m)
-          edition_input='${{ github.event.inputs.edition }}'
 
-          if [ -n "$edition_input" ]; then
-            edition="$edition_input"
+          last_tag=$(git tag --list "${year}.${month}.*" | sort -V | tail -n1)
+          if [ -n "$last_tag" ]; then
+            last_edition=${last_tag##*.}
+            edition=$((10#$last_edition + 1))
           else
-            last_tag=$(git tag --list "${year}.${month}.*" | sort -V | tail -n1)
-            if [ -n "$last_tag" ]; then
-              last_edition=${last_tag##*.}
-              edition=$((10#$last_edition + 1))
-            else
-              edition=1
-            fi
+            edition=0
           fi
 
           tag="${year}.${month}.${edition}"
