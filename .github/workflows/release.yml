@@ -1,0 +1,68 @@
+name: Create release
+
+on:
+  workflow_dispatch:
+    inputs:
+      edition:
+        description: 'Optional edition number for current month'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          year=$(date +%Y)
+          month=$(date +%m)
+          edition_input='${{ github.event.inputs.edition }}'
+
+          if [ -n "$edition_input" ]; then
+            edition="$edition_input"
+          else
+            last_tag=$(git tag --list "${year}.${month}.*" | sort -V | tail -n1)
+            if [ -n "$last_tag" ]; then
+              last_edition=${last_tag##*.}
+              edition=$((10#$last_edition + 1))
+            else
+              edition=1
+            fi
+          fi
+
+          tag="${year}.${month}.${edition}"
+          if git rev-parse "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists" >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.tag.outputs.tag }}"
+          git push origin "${{ steps.tag.outputs.tag }}"
+
+      - name: Create GitHub release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: ${{ steps.tag.outputs.tag }}
+          body: "Release of resume version ${{ steps.tag.outputs.tag }}"
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release info
+        run: echo "Created release ${{ steps.tag.outputs.tag }}"
