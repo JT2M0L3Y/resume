@@ -1,12 +1,7 @@
-name: Deploy GitHub Pages
+name: Deploy
 
 on:
   workflow_call: {}
-
-permissions:
-  pages: write
-  id-token: write
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
