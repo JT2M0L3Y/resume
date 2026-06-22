@@ -1,19 +1,13 @@
 name: Build artifact
 
 on:
-  release: {}
-  workflow_run:
-    workflows:
-      - Create release
-    types:
-      - completed
+  workflow_call: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
-    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

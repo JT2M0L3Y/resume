@@ -1,0 +1,19 @@
+name: Serve Resume
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    uses: ./.github/workflows/subworkflows/release.yml
+  
+  build:
+    needs: release
+    uses: ./.github/workflows/subworkflows/build.yml
+  
+  deploy:
+    needs: build
+    uses: ./.github/workflows/subworkflows/deploy.yml
+

@@ -1,9 +1,7 @@
-name: Create release
+name: Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call: {}
 
 permissions:
   contents: write
@@ -11,11 +9,11 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Determine release tag
         id: tag
@@ -56,6 +54,3 @@ jobs:
           body: "Release of resume version ${{ steps.tag.outputs.tag }}"
           draft: false
           prerelease: false
-
-      - name: Release info
-        run: echo "Created release ${{ steps.tag.outputs.tag }}"
