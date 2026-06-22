@@ -6,15 +6,33 @@ jobs:
   release:
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-      tag_exists: ${{ steps.tag.outputs.tag_exists }}
+      tag: ${{ steps.check_existing.outputs.existing_tag || steps.tag.outputs.tag }}
+      tag_exists: ${{ steps.check_existing.outputs.already_tagged == 'true' || steps.tag.outputs.tag_exists == 'true' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      - name: Check if current commit already tagged
+        id: check_existing
+        run: |
+          git fetch --prune --tags origin
+          current_commit=$(git rev-parse HEAD)
+
+          # Check if any tag points to current commit
+          existing_tag=$(git tag --points-at "$current_commit" | head -n1 || true)
+
+          if [ -n "$existing_tag" ]; then
+            echo "Current commit already has tag: $existing_tag"
+            echo "already_tagged=true" >> "$GITHUB_OUTPUT"
+            echo "existing_tag=$existing_tag" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_tagged=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Determine release tag
+        if: ${{ steps.check_existing.outputs.already_tagged == 'false' }}
         id: tag
         run: |
           set -euo pipefail
@@ -32,7 +50,7 @@ jobs:
             edition=0
           fi
 
-          tag="${year}.${month}.${edition}"
+          tag=$(printf "%s.%s.%03d" "$year" "$month" "$edition")
 
           if git ls-remote --tags --exit-code origin "refs/tags/${tag}" > /dev/null 2>&1; then
             remote_commit=$(git ls-remote --tags origin "refs/tags/${tag}" | awk '{print $1}')
