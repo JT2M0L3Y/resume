@@ -1,3 +1,5 @@
+name: Convert and deploy markdown
+
 on:
   release:
     types:
