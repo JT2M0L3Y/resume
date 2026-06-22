@@ -35,8 +35,16 @@ jobs:
           tag="${year}.${month}.${edition}"
 
           if git ls-remote --tags --exit-code origin "refs/tags/${tag}" > /dev/null 2>&1; then
-            echo "Tag ${tag} already exists on remote - will skip tag creation/push." >&2
-            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+            remote_commit=$(git ls-remote --tags origin "refs/tags/${tag}" | awk '{print $1}')
+            head_commit=$(git rev-parse HEAD)
+
+            if [ "$remote_commit" = "$head_commit" ]; then
+              echo "Tag ${tag} already exists on the current commit - will skip release creation." >&2
+              echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "Tag ${tag} already exists on remote but points to ${remote_commit}, not HEAD ${head_commit}." >&2
+              exit 1
+            fi
           else
             echo "tag_exists=false" >> "$GITHUB_OUTPUT"
           fi
@@ -53,6 +61,7 @@ jobs:
           git push origin "refs/tags/${{ steps.tag.outputs.tag }}"
 
       - name: Create GitHub release
+        if: ${{ steps.tag.outputs.tag_exists == 'false' }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
