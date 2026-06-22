@@ -1,0 +1,33 @@
+name: Build artifact
+
+on:
+  release: {}
+  workflow_run:
+    workflows:
+      - Create release
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Render resume markdown to pages
+        uses: wranders/markdown-to-pages-action@v1.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            resume.md
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-dist
+          path: dist
