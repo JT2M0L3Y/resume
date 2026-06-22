@@ -1,5 +1,3 @@
-name: Build and deploy resume to GitHub Pages
-
 on:
   release:
     types:
@@ -23,9 +21,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             resume.md
-          out_path: dist
-          out_path_not_empty: 'true'
-          title: JT2M0L3Y's Resume
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
