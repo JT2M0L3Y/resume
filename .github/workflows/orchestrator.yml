@@ -18,17 +18,17 @@ jobs:
     needs: tag
     uses: ./.github/workflows/release.yml
 
-  build_html:
+  build-html:
     needs: release
-    uses: ./.github/workflows/build_html.yml
+    uses: ./.github/workflows/build-html.yml
 
-  build_pdf:
+  build-pdf:
     needs: release
-    uses: ./.github/workflows/build_pdf.yml
+    uses: ./.github/workflows/build-pdf.yml
 
   deploy:
     needs:
-      - build_html
-      - build_pdf
+      - build-html
+      - build-pdf
     if: always()
     uses: ./.github/workflows/deploy.yml
