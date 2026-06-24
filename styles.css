@@ -1,0 +1,62 @@
+/* Base layout */
+body {
+    font-family: system-ui, sans-serif;
+    margin: 2rem auto;
+    max-width: 800px;
+    padding: 0 1rem;
+}
+
+/* Toggle bar */
+.view-toggle {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.view-toggle button,
+.view-toggle a {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #eee;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: none;
+}
+
+/* Theme toggle button is always visible */
+#theme-toggle {
+    display: inline-block !important;
+}
+
+/* Light theme */
+:root {
+    --bg: #ffffff;
+    --fg: #000000;
+    --button-bg: #eee;
+    --border-color: #ccc;
+}
+
+/* Dark theme */
+:root[data-theme="dark"] {
+    --bg: #111;
+    --fg: #eee;
+    --button-bg: #333;
+    --border-color: #555;
+}
+
+/* System theme (default) */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #111;
+        --fg: #eee;
+        --button-bg: #333;
+        --border-color: #555;
+    }
+}
+
+body {
+    background: var(--bg);
+    color: var(--fg);
+}

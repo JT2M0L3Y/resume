@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résumé</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="view-toggle">
+        <button id="show-html">HTML View</button>
+        <button id="show-pdf">PDF View</button>
+        <a id="download-pdf" href="resume.pdf" download>Download PDF</a>
+        <button id="theme-toggle">Theme: System</button>
+    </div>
+
+    <div id="html-view" style="display:none;"></div>
+
+    <div id="pdf-view" style="display:none;">
+        <iframe src="resume.pdf" width="100%" height="1000px" style="border:none;"></iframe>
+    </div>
+
+    <div id="fallback" style="display:none;">
+        <p>No résumé formats are currently available. Please check back soon.</p>
+    </div>
+
+    <script src="resume.js"></script>
+
+</body>
+
+</html>

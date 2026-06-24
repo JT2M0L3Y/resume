@@ -1,0 +1,29 @@
+name: Build PDF
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Install Pandoc
+      run: sudo apt-get install -y pandoc
+
+    - name: Install wkhtmltopdf
+      run: sudo apt-get install -y wkhtmltopdf
+
+    - name: Build PDF
+      run: pandoc resume.md -o resume.pdf
+
+    - name: Upload PDF artifact
+      uses: actions/upload-artifact@v6
+      with:
+        name: pdf
+        path: resume.pdf
+        overwrite: true
