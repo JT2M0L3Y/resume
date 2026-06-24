@@ -5,87 +5,77 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.check_existing.outputs.existing_tag || steps.tag.outputs.tag }}
-      tag_exists: ${{ steps.check_existing.outputs.already_tagged == 'true' || steps.tag.outputs.tag_exists == 'true' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Check if current commit already tagged
-        id: check_existing
+      - name: Check if current commit is already tagged
+        id: check_tag
         run: |
-          git fetch --prune --tags origin
-          current_commit=$(git rev-parse HEAD)
-
-          # Check if any tag points to current commit
-          existing_tag=$(git tag --points-at "$current_commit" | head -n1 || true)
-
-          if [ -n "$existing_tag" ]; then
-            echo "Current commit already has tag: $existing_tag"
-            echo "already_tagged=true" >> "$GITHUB_OUTPUT"
-            echo "existing_tag=$existing_tag" >> "$GITHUB_OUTPUT"
+          TAGS=$(git tag --points-at ${{ github.sha }})
+          if [ -z "$TAGS" ]; then
+            echo "tagged=false" >> $GITHUB_OUTPUT
           else
-            echo "already_tagged=false" >> "$GITHUB_OUTPUT"
+            echo "tagged=true" >> $GITHUB_OUTPUT
+            echo "tag=$TAGS" >> $GITHUB_OUTPUT
           fi
 
-      - name: Determine release tag
-        if: ${{ steps.check_existing.outputs.already_tagged == 'false' }}
-        id: tag
+      - name: Generate tag
+        id: tagger
+        if: steps.check_tag.outputs.tagged == 'false'
+        uses: igorgatis/date-time-commit-release@v2
+        with:
+          pattern: "YYYY.MM.{{ edition | pad:3 }}"
+          edition: monthly
+          commit: ${{ github.sha }}
+
+      - name: Set tag value
+        id: final_tag
         run: |
-          set -euo pipefail
-
-          year=$(date +%Y)
-          month=$(date +%m)
-
-          git fetch --prune --tags origin
-
-          last_tag=$(git tag --list "${year}.${month}.*" | sort -V | tail -n1 || true)
-          if [ -n "$last_tag" ]; then
-            last_edition=${last_tag##*.}
-            edition=$((10#$last_edition + 1))
+          if [ "${{ steps.check_tag.outputs.tagged }}" = "true" ]; then
+            echo "tag=${{ steps.check_tag.outputs.tag }}" >> $GITHUB_OUTPUT
           else
-            edition=0
+            echo "tag=${{ steps.tagger.outputs.tag }}" >> $GITHUB_OUTPUT
           fi
 
-          tag=$(printf "%s.%s.%03d" "$year" "$month" "$edition")
-
-          if git ls-remote --tags --exit-code origin "refs/tags/${tag}" > /dev/null 2>&1; then
-            remote_commit=$(git ls-remote --tags origin "refs/tags/${tag}" | awk '{print $1}')
-            head_commit=$(git rev-parse HEAD)
-
-            if [ "$remote_commit" = "$head_commit" ]; then
-              echo "Tag ${tag} already exists on the current commit - will skip release creation." >&2
-              echo "tag_exists=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "Tag ${tag} already exists on remote but points to ${remote_commit}, not HEAD ${head_commit}." >&2
-              exit 1
-            fi
-          else
-            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
-      - name: Create git tag
-        if: ${{ steps.tag.outputs.tag_exists == 'false' }}
+      - name: Create Git tag if missing
+        if: steps.check_tag.outputs.tagged == 'false'
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "${{ steps.tag.outputs.tag }}"
-          git push origin "refs/tags/${{ steps.tag.outputs.tag }}"
+          git tag ${{  steps.final_tag.outputs.tag }}
+          git push origin ${{ steps.final_tag.outputs.tag }}
+
+      - name: Check if release already exists for this tag
+        id: check_release
+        run: |
+          TAG=${{ steps.final_tag.outputs.tag }}
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG)
+
+          if [ "$STATUS" == "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if release already exists
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Release already exists for tag ${{ steps.final_tag.outputs.tag }}"
+          exit 0
 
       - name: Create GitHub release
-        if: ${{ steps.tag.outputs.tag_exists == 'false' }}
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.final_tag.outputs.tag }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          release_name: ${{ steps.tag.outputs.tag }}
-          body: "Release of resume version ${{ steps.tag.outputs.tag }}"
-          draft: false
-          prerelease: false
+
+      - name: Output final tag
+        run: echo "Released version ${{ steps.final_tag.outputs.tag }}"
