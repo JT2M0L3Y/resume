@@ -28,7 +28,7 @@ jobs:
 
   deploy:
     needs:
-      - build-html
-      - build-pdf
+      - build_html
+      - build_pdf
     if: always()
     uses: ./.github/workflows/deploy.yml
