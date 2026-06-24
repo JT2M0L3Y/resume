@@ -1,19 +1,49 @@
 name: Deploy
 
 on:
-  workflow_call: {}
+  workflow_call:
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Download Pages artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pages-dist
-          path: ./dist
-          run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v5
-        with:
-          artifact_name: pages-dist
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Prepare dist directory
+      run: mkdir -p dist
+
+    - name: Download HTML artifact (if exists)
+      uses: actions/download-artifact@v8
+      with:
+        name: html
+        path: dist
+      continue-on-error: true
+
+    - name: Download PDF artifact (if exists)
+      uses: actions/download-artifact@v8
+      with:
+        name: pdf
+        path: dist
+      continue-on-error: true
+
+    - name: Compile TypeScript
+      run: |
+        tsc resume.ts --outFile dist/resume.js
+
+    - name: Copy template and CSS
+      run: |
+        cp index.template.html dist/index.html
+        cp styles.css dist/styles.css
+
+    - name: Upload artifact for GitHub Pages
+      uses: actions/upload-pages-artifact@v5
+      with:
+        path: dist
+
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v5

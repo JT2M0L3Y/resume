@@ -11,13 +11,24 @@ permissions:
   id-token: write
 
 jobs:
+  tag:
+    uses: ./.github/workflows/tag.yml
+
   release:
+    needs: tag
     uses: ./.github/workflows/release.yml
 
-  build:
+  build_html:
     needs: release
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build_html.yml
+
+  build_pdf:
+    needs: release
+    uses: ./.github/workflows/build_pdf.yml
 
   deploy:
-    needs: build
+    needs:
+      - build-html
+      - build-pdf
+    if: always()
     uses: ./.github/workflows/deploy.yml

@@ -1,0 +1,56 @@
+name: Tag
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      
+      - name: Check if current commit is already tagged
+        id: check_tag
+        run: |
+          TAGS=$(git tag --points-at ${{ github.sha }})
+          if [ -z "$TAGS" ]; then
+            echo "tagged=false" >> $GITHUB_OUTPUT
+          else
+            echo "tagged=true" >> $GITHUB_OUTPUT
+            echo "tag=$TAGS" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate tag
+        id: tagger
+        if: steps.check_tag.outputs.tagged == 'false'
+        uses: igorgatis/date-time-commit-release@v2
+        with:
+          pattern: "YYYY.MM.{{ edition | pad:3 }}"
+          edition: monthly
+          commit: ${{ github.sha }}
+      
+      - name: Set tag value
+        id: final_tag
+        run: |
+          if [ "${{ steps.check_tag.outputs.tagged }}" = "true" ]; then
+            echo "tag=${{ steps.check_tag.outputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ steps.tagger.outputs.tag }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Git tag if missing
+        if: steps.check_tag.outputs.tagged == 'false'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{  steps.final_tag.outputs.tag }}
+          git push origin ${{ steps.final_tag.outputs.tag }}
+
+      - name: Output tag
+        run: echo "Tagged version ${{ steps.final_tag.outputs.tag }}"
+  
