@@ -6,7 +6,9 @@ on:
 
 permissions:
   contents: write
+  pages: write
   pull-requests: write
+  id-token: write
 
 jobs:
   build_html:
