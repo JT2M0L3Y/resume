@@ -63,13 +63,8 @@
 
 ### Developed
 - **Languages:** Python, Java, C++, TypeScript, Bash, YAML, SQL
-- **Databases:** PostgreSQL, MySQL, DB2
+- **Databases:** PostgreSQL, MySQL, DB2, SQL Server, MongoDB
 - **Tools:** Git, Docker, Ansible, GCP, AWS
-
-### Developing
-- **Languages:** Go, Rust
-- **Databases:** Redis, SQL Server, MongoDB
-- **Tools:** Kubernetes, Azure
 
 ## Involvement
 
@@ -78,7 +73,7 @@
 - Attendees: 20 students
 - Description: A study abroad program in London focused on the city's literary history and cultural influence.
 
-### Gonzaga in Berlin: Intro to Info Warfare
+### Gonzaga in Berlin: Introduction to Information Warfare
 - Role: International Student Participant
 - Attendees: 15 students
 - Description: A study abroad program in Berlin focused on modern information warfare concepts and implications.
@@ -102,4 +97,3 @@
 - Role: Regional Judge
 - Attendees: 100+ students
 - Description: A robotics competition that inspires young people to be science and technology leaders through mentor-based programs.
-
