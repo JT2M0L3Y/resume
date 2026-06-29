@@ -46,7 +46,6 @@
 
 ## Skills
 
-### Developed
 - **Languages:** Python, Java, C++, TypeScript, Bash, YAML, SQL
 - **Databases:** PostgreSQL, MySQL, DB2, SQL Server, MongoDB
 - **Tools:** Git, Docker, Ansible, GCP, AWS
