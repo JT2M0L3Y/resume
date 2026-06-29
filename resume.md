@@ -1,6 +1,3 @@
----
----
-
 # Jonathan Smoley
 
 📧 [jtsmoley2014@gmail.com](mailto:jtsmoley2014@gmail.com) | 📱 [(760) 214-2425](tel:+17602142425) | 🔗 [LinkedIn](https://www.linkedin.com/in/jonathansmoley/) | 🐙 [GitHub](https://github.com/jt2m0l3y)
